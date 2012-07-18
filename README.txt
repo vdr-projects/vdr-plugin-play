@@ -100,7 +100,7 @@ Requires:
 		X C-language Bindings library
 		http://xcb.freedesktop.org
 	x11-libs/xcb-util-image,
-	not yet: x11-libs/xcb-util-wm,
+	x11-libs/xcb-util-wm,
 	not yet: x11-libs/xcb-util-keysyms
 		X C-language Bindings library
 		http://xcb.freedesktop.org
