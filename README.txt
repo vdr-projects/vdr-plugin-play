@@ -99,9 +99,9 @@ Requires:
 	x11-libs/libxcb,
 		X C-language Bindings library
 		http://xcb.freedesktop.org
-	x11-libs/xcb-util,
-	x11-libs/xcb-util-wm,
-	x11-libs/xcb-util-keysyms
+	x11-libs/xcb-util-image,
+	not yet: x11-libs/xcb-util-wm,
+	not yet: x11-libs/xcb-util-keysyms
 		X C-language Bindings library
 		http://xcb.freedesktop.org
 		Only versions >= 0.3.8 are good supported
