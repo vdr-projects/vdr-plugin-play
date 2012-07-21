@@ -148,8 +148,6 @@ static xcb_window_t VideoCreateWindow(xcb_window_t parent,
     xcb_configure_window(Connection, window,
 	XCB_CONFIG_WINDOW_SIBLING | XCB_CONFIG_WINDOW_STACK_MODE, values);
 
-    xcb_map_window(Connection, window);
-
     return window;
 }
 
@@ -467,6 +465,11 @@ void VideoPollEvents(int timeout)
     int n;
     int delay;
 
+    if (!Connection) {
+	Debug(3, "play: poll without connection\n");
+	return;
+    }
+
     fds[0].fd = xcb_get_file_descriptor(Connection);
     fds[0].events = POLLIN | POLLPRI;
 
@@ -633,6 +636,7 @@ int VideoInit(const char *display)
     VideoPlayWindow =
 	VideoCreateWindow(VideoScreen->root, VideoScreen->root_visual,
 	VideoScreen->root_depth);
+    xcb_map_window(Connection, VideoPlayWindow);
     VideoOsdWindow =
 	VideoCreateWindow(VideoPlayWindow, VideoScreen->root_visual,
 	VideoScreen->root_depth);
