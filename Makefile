@@ -19,7 +19,7 @@ GIT_REV = $(shell git describe --always 2>/dev/null)
 ### Configuration (edit this for your needs)
 
 CONFIG := #-DDEBUG
-CONFIG +=
+CONFIG += -DUSE_AVFS			# use a virtual file system
 
 ### The C++ compiler and options:
 
@@ -60,18 +60,24 @@ DEFINES += $(CONFIG) -D_GNU_SOURCE -DPLUGIN_NAME_I18N='"$(PLUGIN)"' \
 	$(if $(GIT_REV), -DGIT_REV='"$(GIT_REV)"')
 
 _CFLAGS = $(DEFINES) $(INCLUDES) \
-	$(shell pkg-config --cflags xcb xcb-event xcb-keysyms xcb-icccm xcb-image) 
+	$(shell pkg-config --cflags xcb xcb-event xcb-keysyms xcb-icccm \
+		xcb-image) \
+	$(if $(findstring USE_AVFS,$(CONFIG)), `avfs-config --cflags`) \
+	$(if $(findstring USE_PNG,$(CONFIG)), `pkg-config --cflags libpng`)
 
 #override _CFLAGS  += -Werror
 override CXXFLAGS += $(_CFLAGS)
 override CFLAGS	  += $(_CFLAGS)
 
 LIBS += \
-	$(shell pkg-config --libs xcb xcb-keysyms xcb-event xcb-icccm xcb-image) 
+	$(shell pkg-config --libs xcb xcb-keysyms xcb-event xcb-icccm \
+		xcb-image) \
+	$(if $(findstring USE_AVFS,$(CONFIG)), `avfs-config --libs`) \
+	$(if $(findstring USE_PNG,$(CONFIG)), `pkg-config --libs libpng`)
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o video.o
+OBJS = $(PLUGIN).o dia.o video.o readdir.o
 SRCS = $(wildcard $(OBJS:.o=.c)) $(PLUGIN).cpp
 
 ### The main target:
