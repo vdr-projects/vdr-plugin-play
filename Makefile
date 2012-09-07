@@ -19,7 +19,12 @@ GIT_REV = $(shell git describe --always 2>/dev/null)
 ### Configuration (edit this for your needs)
 
 CONFIG := #-DDEBUG
-CONFIG += -DUSE_AVFS			# use a virtual file system
+	# autodetect: use a virtual file system
+CONFIG += $(shell test -x /usr/bin/avfs-config && echo "-DUSE_AVFS")
+	# autodetect: use ffmpeg software scale  
+CONFIG += $(shell pkg-config --exists libswscale && echo "-DUSE_SWSCALE")
+	# autodetect: support png images
+CONFIG += $(shell pkg-config --exists libpng && echo "-DUSE_PNG")
 
 ### The C++ compiler and options:
 
@@ -59,21 +64,26 @@ INCLUDES += -I$(VDRDIR)/include
 DEFINES += $(CONFIG) -D_GNU_SOURCE -DPLUGIN_NAME_I18N='"$(PLUGIN)"' \
 	$(if $(GIT_REV), -DGIT_REV='"$(GIT_REV)"')
 
-_CFLAGS = $(DEFINES) $(INCLUDES) \
+_CFLAGS := $(DEFINES) $(INCLUDES) \
 	$(shell pkg-config --cflags xcb xcb-event xcb-keysyms xcb-icccm \
 		xcb-image) \
 	$(if $(findstring USE_AVFS,$(CONFIG)), `avfs-config --cflags`) \
+	$(if $(findstring USE_SWSCALE,$(CONFIG)), \
+		`pkg-config --cflags libswscale`) \
 	$(if $(findstring USE_PNG,$(CONFIG)), `pkg-config --cflags libpng`)
 
-#override _CFLAGS  += -Werror
-override CXXFLAGS += $(_CFLAGS)
+#_CFLAGS  += -Werror
 override CFLAGS	  += $(_CFLAGS)
+override CXXFLAGS += $(_CFLAGS)
 
-LIBS += \
-	$(shell pkg-config --libs xcb xcb-keysyms xcb-event xcb-icccm \
+_LIBS := $(shell pkg-config --libs xcb xcb-keysyms xcb-event xcb-icccm \
 		xcb-image) \
 	$(if $(findstring USE_AVFS,$(CONFIG)), `avfs-config --libs`) \
+	$(if $(findstring USE_SWSCALE,$(CONFIG)), \
+		`pkg-config --libs libswscale`) \
 	$(if $(findstring USE_PNG,$(CONFIG)), `pkg-config --libs libpng`)
+
+override LIBS += $(_LIBS)
 
 ### The object files (add further files here):
 

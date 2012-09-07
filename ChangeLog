@@ -1,6 +1,7 @@
 User johns
 Date:
 
+    Add dia show image/picture viewer.
     Add player thread for events and pipe output.
     Support DVDNAV buttons.
     Colorkey becomes parameter (f.e. mplayer2).
