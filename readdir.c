@@ -302,9 +302,12 @@ int ScanDirectory(const char *name, int flag_dir, const NameFilter * filter,
 	char *tmp;
 
 	// skip hidden files, wrong kind, wrong suffix
+	save = errno;
 	if (flag_dir ? !FilterIsDirectory(entry) : !FilterIsFile(entry)) {
+	    errno = save;
 	    continue;
 	}
+	errno = save;
 
 	len = _D_ALLOC_NAMLEN(entry);
 	if (!(tmp = malloc(len))) {
