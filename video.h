@@ -41,6 +41,9 @@ extern void VideoPollEvents(int);
     /// Get player window id.
 extern int VideoGetPlayWindow(void);
 
+    /// Set Osd 3D Mode
+extern void VideoSetOsd3DMode(int);
+
     /// Draw an OSD ARGB image.
 extern void VideoDrawARGB(int, int, int, int, const uint8_t *);
 

@@ -70,6 +70,8 @@ static int VideoWindowY;		///< video outout window y coordinate
 static unsigned VideoWindowWidth;	///< video output window width
 static unsigned VideoWindowHeight;	///< video output window height
 
+static char Osd3DMode;			///< 3D OSD mode
+
 ///
 ///	Create X11 window.
 ///
@@ -152,6 +154,16 @@ static xcb_window_t VideoCreateWindow(xcb_window_t parent,
 }
 
 ///
+///	Enable OSD 3d mode.
+///
+///	@param mode	turn 3d mode on/off
+///
+void VideoSetOsd3DMode(int mode)
+{
+    Osd3DMode = mode;
+}
+
+///
 ///	Draw a ARGB image.
 ///
 ///	@param x	x position of image in osd
@@ -166,18 +178,41 @@ void VideoDrawARGB(int x, int y, int width, int height, const uint8_t * argb)
     xcb_gcontext_t gc;
     int sx;
     int sy;
+    int fs;
 
     if (!Connection) {
 	Debug(3, "play: FIXME: must restore osd provider\n");
 	return;
     }
 
+    if (x + y < 1 && height == VideoWindowHeight && width == VideoWindowWidth) {
+	fs = 1;
+    } else {
+	fs = 0;
+    }
+
     gc = xcb_generate_id(Connection);
     xcb_create_gc(Connection, gc, VideoOsdWindow, 0, NULL);
 
-    xcb_image =
-	xcb_image_create_native(Connection, width, height,
-	XCB_IMAGE_FORMAT_Z_PIXMAP, VideoScreen->root_depth, NULL, 0L, NULL);
+    switch (Osd3DMode) {
+	case 1:			// SBS
+	    xcb_image =
+		xcb_image_create_native(Connection, width / 2, height,
+		XCB_IMAGE_FORMAT_Z_PIXMAP, VideoScreen->root_depth, NULL, 0L,
+		NULL);
+	    break;
+	case 2:			// TB
+	    xcb_image =
+		xcb_image_create_native(Connection, width, height / 2,
+		XCB_IMAGE_FORMAT_Z_PIXMAP, VideoScreen->root_depth, NULL, 0L,
+		NULL);
+	    break;
+	default:
+	    xcb_image =
+		xcb_image_create_native(Connection, width, height,
+		XCB_IMAGE_FORMAT_Z_PIXMAP, VideoScreen->root_depth, NULL, 0L,
+		NULL);
+    }
 
     //	fast 32it versions
     if (xcb_image->bpp == 32) {
@@ -193,7 +228,18 @@ void VideoDrawARGB(int x, int y, int width, int height, const uint8_t * argb)
 			pixel |= argb[(width * sy + sx) * 4 + 1] << 8;
 			pixel |= argb[(width * sy + sx) * 4 + 2] << 16;
 		    }
-		    xcb_image_put_pixel_Z32L(xcb_image, sx, sy, pixel);
+		    switch (Osd3DMode) {
+			case 1:	// SBS
+			    xcb_image_put_pixel_Z32L(xcb_image, sx / 2, sy,
+				pixel);
+			    break;
+			case 2:	// TB
+			    xcb_image_put_pixel_Z32L(xcb_image, sx, sy / 2,
+				pixel);
+			    break;
+			default:
+			    xcb_image_put_pixel_Z32L(xcb_image, sx, sy, pixel);
+		    }
 		}
 	    }
 	} else {
@@ -213,13 +259,51 @@ void VideoDrawARGB(int x, int y, int width, int height, const uint8_t * argb)
 		    pixel |= argb[(width * sy + sx) * 4 + 1] << 8;
 		    pixel |= argb[(width * sy + sx) * 4 + 2] << 16;
 		}
-		xcb_image_put_pixel(xcb_image, sx, sy, pixel);
+		switch (Osd3DMode) {
+		    case 1:		// SBS
+			xcb_image_put_pixel(xcb_image, sx / 2, sy, pixel);
+			break;
+		    case 2:		// TB
+			xcb_image_put_pixel(xcb_image, sx, sy / 2, pixel);
+			break;
+		    default:
+			xcb_image_put_pixel(xcb_image, sx, sy, pixel);
+		}
 	    }
 	}
     }
 
     // render xcb_image to color data pixmap
-    xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x, y, 0);
+    switch (Osd3DMode) {
+	case 1:			// SBS
+	    if (fs) {
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x, y,
+		    0);
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image,
+		    x + VideoWindowWidth / 2, y, 0);
+	    } else {
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x / 2,
+		    y, 0);
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image,
+		    x / 2 + VideoWindowWidth / 2, y, 0);
+	    }
+	    break;
+	case 2:			// TB
+	    if (fs) {
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x, y,
+		    0);
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x,
+		    y + VideoWindowHeight / 2, 0);
+	    } else {
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x,
+		    y / 2, 0);
+		xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x,
+		    y / 2 + VideoWindowHeight / 2, 0);
+	    }
+	    break;
+	default:
+	    xcb_image_put(Connection, VideoOsdWindow, gc, xcb_image, x, y, 0);
+    }
     // release xcb_image
     xcb_image_destroy(xcb_image);
     xcb_free_gc(Connection, gc);
