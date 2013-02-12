@@ -20,7 +20,7 @@ HOMEPAGE="http://projects.vdr-developer.org/projects/show/plg-play"
 
 LICENSE="AGPL-3"
 SLOT="0"
-IUSE=""
+IUSE="jpeg png avfs swscale"
 
 RDEPEND=">=media-video/vdr-1.7
 		>=x11-libs/libxcb-1.8
@@ -28,7 +28,11 @@ RDEPEND=">=media-video/vdr-1.7
 		x11-libs/xcb-util-image
 		x11-libs/xcb-util-keysyms
 		x11-libs/xcb-util-wm
-		|| ( media-video/mplayer media-video/mplayer2 )"
+		|| ( media-video/mplayer media-video/mplayer2 )
+		jpeg? ( virtual/jpeg )
+		png? ( media-libs/libpng )
+		avfs? ( sys-fs/avfs )
+		swscale? ( >=virtual/ffmpeg-0.7 )"
 DEPEND="${RDEPEND}
 		x11-proto/xproto
 		sys-devel/gettext
@@ -43,7 +47,10 @@ src_compile() {
 		local myconf
 
 		myconf="-DHAVE_PTHREAD_NAME"
-		#use jpeg && myconf="${myconf} -DUSE_JPEG"
+		use jpeg && myconf="${myconf} -DUSE_JPEG"
+		use png && myconf="${myconf} -DUSE_PNG"
+		use avfs && myconf="${myconf} -DUSE_AVFS"
+		use swscale && myconf="${myconf} -DUSE_SWSCALE"
 
 		emake all CC="$(tc-getCC)" CFLAGS="${CFLAGS}" \
 			LDFLAGS="${LDFLAGS}" CONFIG="${myconf}" LIBDIR="." || die

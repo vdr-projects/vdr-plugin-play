@@ -1,7 +1,7 @@
 #
 # Makefile for a Video Disk Recorder plugin
 #
-# $Id$
+# $Id: 14fbc0969bcd384cea8b8b420b49d49a6c3ef381 $
 
 # The official name of this plugin.
 # This name will be used in the '-P...' option of VDR to load the plugin.
@@ -31,8 +31,8 @@ CONFIG += $(shell pkg-config --exists libpng && echo "-DUSE_PNG")
 CC	?= gcc
 CXX	?= g++
 CFLAGS	?= -g -O2 -W -Wall -Wextra -Winit-self \
-	-Wdeclaration-after-statement
-CXXFLAGS ?= -g -O2 -W -Wall -Wextra -Werror=overloaded-virtual
+	-Wdeclaration-after-statement -fPIC
+CXXFLAGS ?= -g -O2 -W -Wall -Wextra -Werror=overloaded-virtual -fPIC
 
 ### The directory environment:
 
