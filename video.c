@@ -1,7 +1,7 @@
 ///
 ///	@file video.c	@brief Video module
 ///
-///	Copyright (c) 2012 by Johns.  All Rights Reserved.
+///	Copyright (c) 2012, 2013 by Johns.  All Rights Reserved.
 ///
 ///	Contributor(s):
 ///
@@ -185,7 +185,8 @@ void VideoDrawARGB(int x, int y, int width, int height, const uint8_t * argb)
 	return;
     }
 
-    if (x + y < 1 && height == VideoWindowHeight && width == VideoWindowWidth) {
+    if (x + y < 1 && (unsigned)height == VideoWindowHeight
+	&& (unsigned)width == VideoWindowWidth) {
 	fs = 1;
     } else {
 	fs = 0;
