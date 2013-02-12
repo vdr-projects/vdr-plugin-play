@@ -25,6 +25,8 @@ CONFIG += $(shell test -x /usr/bin/avfs-config && echo "-DUSE_AVFS")
 CONFIG += $(shell pkg-config --exists libswscale && echo "-DUSE_SWSCALE")
 	# autodetect: support png images
 CONFIG += $(shell pkg-config --exists libpng && echo "-DUSE_PNG")
+	# autodetect: support jpg images
+CONFIG += $(shell test -r /usr/include/jpeglib.h && echo "-DUSE_JPG")
 
 ### The C++ compiler and options:
 
@@ -81,7 +83,8 @@ _LIBS := $(shell pkg-config --libs xcb xcb-keysyms xcb-event xcb-icccm \
 	$(if $(findstring USE_AVFS,$(CONFIG)), `avfs-config --libs`) \
 	$(if $(findstring USE_SWSCALE,$(CONFIG)), \
 		`pkg-config --libs libswscale`) \
-	$(if $(findstring USE_PNG,$(CONFIG)), `pkg-config --libs libpng`)
+	$(if $(findstring USE_PNG,$(CONFIG)), `pkg-config --libs libpng`) \
+	$(if $(findstring USE_JPG,$(CONFIG)), -ljpeg)
 
 override LIBS += $(_LIBS)
 
