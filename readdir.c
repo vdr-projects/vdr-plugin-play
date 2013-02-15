@@ -1,7 +1,7 @@
 ///
 ///	@file readdir.c		@brief directory reading module
 ///
-///	Copyright (c) 2012 by Johns.  All Rights Reserved.
+///	Copyright (c) 2012, 2013 by Johns.  All Rights Reserved.
 ///
 ///	Contributor(s):
 ///
@@ -22,6 +22,10 @@
 
 #define __USE_ZZIPLIB			///< zip archives support
 #define __USE_AVFS			///< A Virtual File System support
+
+#ifdef USE_AVFS
+#error "Version 1.0.1 of AVFS has memory corruption".
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -61,6 +65,7 @@
 
 const char ConfigShowHiddenFiles = 0;	///< config show hidden files
 static const char *BaseDir;		///< current directory
+static int BaseDirLen;			///< length of current directory name
 static const NameFilter *NameFilters;	///< current name filter table
 
 //////////////////////////////////////////////////////////////////////////////
@@ -167,7 +172,7 @@ static int FilterIsDirectory(const struct dirent *dirent)
 #endif
 
     // DT_UNKOWN or DT_LNK
-    tmp = (char *)malloc(strlen(BaseDir) + strlen(dirent->d_name) + 1);
+    tmp = malloc(BaseDirLen + len + 1);
     stpcpy(stpcpy(tmp, BaseDir), dirent->d_name);
     dir = IsDirectory(tmp);
     free(tmp);
@@ -220,7 +225,7 @@ static int FilterIsFile(const struct dirent *dirent)
 #endif
 
     // DT_UNKOWN or DT_LNK
-    tmp = (char *)malloc(strlen(BaseDir) + strlen(dirent->d_name) + 1);
+    tmp = malloc(BaseDirLen + len + 1);
     stpcpy(stpcpy(tmp, BaseDir), dirent->d_name);
     dir = IsDirectory(tmp);
     free(tmp);
@@ -272,6 +277,7 @@ int ScanDirectory(const char *name, int flag_dir, const NameFilter * filter,
 
     // FIXME: threads remove global variables
     BaseDir = name;
+    BaseDirLen = strlen(BaseDir);
     NameFilters = filter;
 
     if (!(dir = virt_opendir(name))) {

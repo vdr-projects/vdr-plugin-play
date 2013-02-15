@@ -1,2 +1,2 @@
-
+Can autodetect color key.
 ffodivxvdpau not always supported.
