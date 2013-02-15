@@ -12,7 +12,8 @@ PLUGIN = play
 ### Configuration (edit this for your needs)
 
     # support avfs a virtual file system
-AVFS ?= $(shell test -x /usr/bin/avfs-config && echo 1)
+# FIXME: AVFS isn't working, corrupts memory
+#AVFS ?= $(shell test -x /usr/bin/avfs-config && echo 1)
     # use ffmpeg libswscale
 SWCALE ?= $(shell pkg-config --exists libswscale && echo 1)
     # support png images
@@ -20,7 +21,7 @@ PNG ?= $(shell pkg-config --exists libpng && echo 1)
     # support jpg images
 JPG ?= $(shell test -r /usr/include/jpeglib.h && echo 1)
 
-CONFIG := # -DDEBUG			# uncomment to build DEBUG
+CONFIG := #-DDEBUG			# uncomment to build DEBUG
 
 ifeq ($(AVFS),1)
 CONFIG += -DUSE_AVFS
@@ -106,7 +107,7 @@ override CFLAGS	  += $(_CFLAGS) $(DEFINES) $(INCLUDES) \
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o dia.o video.o readdir.o
+OBJS = $(PLUGIN).o player.o video.o readdir.o
 
 SRCS = $(wildcard $(OBJS:.o=.c)) $(PLUGIN).cpp
 
@@ -135,7 +136,9 @@ I18Npot	  = $(PODIR)/$(PLUGIN).pot
 	msgfmt -c -o $@ $<
 
 $(I18Npot): $(SRCS)
-	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --package-name=vdr-$(PLUGIN) --package-version=$(VERSION) --msgid-bugs-address='<see README>' -o $@ `ls $^`
+	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP \
+	-k_ -k_N --package-name=vdr-$(PLUGIN) --package-version=$(VERSION) \
+	--msgid-bugs-address='<see README>' -o $@ `ls $^`
 
 %.po: $(I18Npot)
 	msgmerge -U --no-wrap --no-location --backup=none -q -N $@ $<
