@@ -60,6 +60,7 @@ static const char *MAINMENUENTRY = trNOOP("Play");
 //////////////////////////////////////////////////////////////////////////////
 
 static char ConfigHideMainMenuEntry;	///< hide main menu entry
+static char ConfigDisableRemote;	///< disable remote during external play
 
 //////////////////////////////////////////////////////////////////////////////
 //	C Callbacks
@@ -130,6 +131,25 @@ extern "C" void FeedKeyPress(const char *keymap, const char *key, int repeat,
     } else if (!csoft->Put(key, repeat, release)) {
 	cRemote::Put(KBDKEY(key[0]));	// feed it for edit mode
     }
+}
+
+/**
+**	Disable remotes.
+*/
+void RemoteDisable(void)
+{
+    dsyslog("[play]: remote disabled\n");
+    cRemote::SetEnabled(false);
+}
+
+/**
+**	Enable remotes.
+*/
+void RemoteEnable(void)
+{
+    dsyslog("[play]: remote enabled\n");
+    cRemote::SetEnabled(false);
+    cRemote::SetEnabled(true);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -206,12 +226,15 @@ class cMyPlayer:public cPlayer
 cMyPlayer::cMyPlayer(const char *filename)
 :cPlayer(pmExtern_THIS_SHOULD_BE_AVOIDED)
 {
-    dsyslog("play/%s: '%s'\n", __FUNCTION__, filename);
+    dsyslog("[play]%s: '%s'\n", __FUNCTION__, filename);
 
     PlayerVolume = cDevice::CurrentVolume();
-    dsyslog("play: initial volume %d\n", PlayerVolume);
+    dsyslog("{play]: initial volume %d\n", PlayerVolume);
 
     FileName = strdup(filename);
+    if (ConfigDisableRemote) {
+	RemoteDisable();
+    }
 }
 
 /**
@@ -219,10 +242,13 @@ cMyPlayer::cMyPlayer(const char *filename)
 */
 cMyPlayer::~cMyPlayer()
 {
-    dsyslog("%s: end\n", __FUNCTION__);
+    dsyslog("{play]%s: end\n", __FUNCTION__);
 
     PlayerStop();
     free(FileName);
+    if (ConfigDisableRemote) {
+	RemoteEnable();
+    }
 }
 
 /**
@@ -281,7 +307,7 @@ cMyStatus::cMyStatus(void)
 */
 void cMyStatus::SetVolume(int volume, bool absolute)
 {
-    dsyslog("play: volume %d %s\n", volume, absolute ? "abs" : "rel");
+    dsyslog("[play]: volume %d %s\n", volume, absolute ? "abs" : "rel");
 
     if (absolute) {
 	Volume = volume;
@@ -364,7 +390,7 @@ void cMyControl::ShowProgress(void)
 */
 void cMyControl::Show(void)
 {
-    dsyslog("%s:\n", __FUNCTION__);
+    dsyslog("[play]%s:\n", __FUNCTION__);
     if (!Display) {
 	ShowProgress();
     }
@@ -394,7 +420,7 @@ cMyControl::cMyControl(const char *filename)
 */
 cMyControl::~cMyControl()
 {
-    dsyslog("%s\n", __FUNCTION__);
+    dsyslog("[play]%s\n", __FUNCTION__);
 
     delete Player;
     delete Display;
@@ -410,7 +436,7 @@ cMyControl::~cMyControl()
 */
 void cMyControl::Hide(void)
 {
-    dsyslog("%s:\n", __FUNCTION__);
+    dsyslog("[play]%s:\n", __FUNCTION__);
 
     if (Display) {
 	delete Display;
@@ -429,10 +455,10 @@ eOSState cMyControl::ProcessKey(eKeys key)
 {
     eOSState state;
 
-    dsyslog("%s: %d\n", __FUNCTION__, key);
+    dsyslog("[play]%s: %d\n", __FUNCTION__, key);
 
     if (!PlayerIsRunning()) {		// check if player is still alive
-	dsyslog("play: player died\n");
+	dsyslog("[play]: player died\n");
 	Hide();
 	//FIXME: Stop();
 	return osEnd;
@@ -606,7 +632,7 @@ eOSState cMyControl::ProcessKey(eKeys key)
 */
 static void PlayFile(const char *filename)
 {
-    dsyslog("play: play file '%s'\n", filename);
+    dsyslog("[play]: play file '%s'\n", filename);
     cControl::Launch(new cMyControl(filename));
 }
 
@@ -1127,7 +1153,7 @@ void cMyOsd::Flush(void)
     if (OsdLevel >= OSD_LEVEL_SUBTITLES) {
 	OsdClear();
 	cMyOsd::Dirty = 1;
-	dsyslog("[softhddev]%s: subtitle clear\n", __FUNCTION__);
+	dsyslog("[play]%s: subtitle clear\n", __FUNCTION__);
     }
 
     if (!IsTrueColor()) {
@@ -1287,6 +1313,7 @@ class cMyMenuSetupPage:public cMenuSetupPage
     /// local copies of global setup variables:
     /// @{
     int HideMainMenuEntry;
+    int DisableRemote;
 
     /// @}
     virtual void Store(void);
@@ -1316,8 +1343,11 @@ eOSState cMyMenuSetupPage::ProcessKey(eKeys key)
 cMyMenuSetupPage::cMyMenuSetupPage(void)
 {
     HideMainMenuEntry = ConfigHideMainMenuEntry;
+    DisableRemote = ConfigDisableRemote;
 
     Add(new cMenuEditBoolItem(tr("Hide main menu entry"), &HideMainMenuEntry,
+	    trVDR("no"), trVDR("yes")));
+    Add(new cMenuEditBoolItem(tr("Disable remote"), &DisableRemote,
 	    trVDR("no"), trVDR("yes")));
 }
 
@@ -1328,6 +1358,7 @@ void cMyMenuSetupPage::Store(void)
 {
     SetupStore("HideMainMenuEntry", ConfigHideMainMenuEntry =
 	HideMainMenuEntry);
+    SetupStore("DisableRemote", ConfigDisableRemote = DisableRemote);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1495,8 +1526,6 @@ bool cMyPlugin::Initialize(void)
 */
 const char *cMyPlugin::MainMenuEntry(void)
 {
-    //dsyslog("[play]%s:\n", __FUNCTION__);
-
     return ConfigHideMainMenuEntry ? NULL : tr(MAINMENUENTRY);
 }
 
@@ -1618,6 +1647,10 @@ bool cMyPlugin::SetupParse(const char *name, const char *value)
 
     if (!strcasecmp(name, "HideMainMenuEntry")) {
 	ConfigHideMainMenuEntry = atoi(value);
+	return true;
+    }
+    if (!strcasecmp(name, "DisableRemote")) {
+	ConfigDisableRemote = atoi(value);
 	return true;
     }
 #if 0
