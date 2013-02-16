@@ -108,6 +108,9 @@ extern "C"
     /// Is external player still running
     extern int PlayerIsRunning(void);
 
+    /// Set player volume
+    extern void PlayerSetVolume(int);
+
 #ifdef __cplusplus
 }
 #endif

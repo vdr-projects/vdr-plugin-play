@@ -141,7 +141,7 @@ static char PlayerSpeed;		///< player playback speed
 /**
 **	Parse player output.
 **
-**	@param data	line pointer
+**	@param data	line pointer (\0 terminated)
 **	@param size	line length
 */
 static void PlayerParseLine(const char *data, int size)
@@ -416,6 +416,7 @@ static void PlayerForkAndExec(const char *filename)
 	return;
     }
     PlayerPid = pid;			// parent
+    setpgid(pid, 0);
 
     if (ConfigUseSlave) {
 	close(PlayerPipeIn[0]);
@@ -649,6 +650,23 @@ int PlayerIsRunning(void)
     }
     PlayerPid = 0;
     return 0;
+}
+
+/**
+**	Set player volume.
+**
+**	@param volume	new volume (0..255)
+*/
+void PlayerSetVolume(int volume)
+{
+    Debug(3, "player: set volume=%d\n", volume);
+
+    if (PlayerVolume != volume) {
+	PlayerVolume = volume;
+	if (PlayerPid) {
+	    PlayerSendVolume();
+	}
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////

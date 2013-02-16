@@ -187,13 +187,11 @@ extern "C" void DrawText(int x, int y, const char *s, uint32_t fg, uint32_t bg,
 //////////////////////////////////////////////////////////////////////////////
 
 static char DvdNav;			///< dvdnav active
-static int PlayerVolume = -1;		///< volume 0 - 100
 static char PlayerPaused;		///< player paused
 static char PlayerSpeed;		///< player playback speed
 
 #define PlayerSendQuit()
 #define PlayerSendPause()
-#define PlayerSendVolume()
 #define PlayerSendSetSpeed(x)
 #define PlayerSendSeek(x)
 #define SendCommand(x)
@@ -228,8 +226,8 @@ cMyPlayer::cMyPlayer(const char *filename)
 {
     dsyslog("[play]%s: '%s'\n", __FUNCTION__, filename);
 
-    PlayerVolume = cDevice::CurrentVolume();
-    dsyslog("{play]: initial volume %d\n", PlayerVolume);
+    PlayerSetVolume(cDevice::CurrentVolume());
+    dsyslog("[play]: initial volume %d\n", cDevice::CurrentVolume());
 
     FileName = strdup(filename);
     if (ConfigDisableRemote) {
@@ -242,7 +240,7 @@ cMyPlayer::cMyPlayer(const char *filename)
 */
 cMyPlayer::~cMyPlayer()
 {
-    dsyslog("{play]%s: end\n", __FUNCTION__);
+    dsyslog("[play]%s: end\n", __FUNCTION__);
 
     PlayerStop();
     free(FileName);
@@ -280,18 +278,23 @@ bool cMyPlayer::GetReplayMode(bool & play, bool & forward, int &speed)
 //	cStatus
 //////////////////////////////////////////////////////////////////////////////
 
+/**
+**	Status class.
+**
+**	To get volume changes.
+*/
 class cMyStatus:public cStatus
 {
+  private:
+    int Volume;				///< current volume
+
   public:
-    cMyStatus(void);
+    cMyStatus(void);			///< my status constructor
 
   protected:
     virtual void SetVolume(int, bool);	///< volume changed
-
-    //bool GetVolume(int &, bool &);
 };
 
-static int Volume;			///< current volume
 cMyStatus *Status;			///< status monitor for volume
 
 /**
@@ -315,18 +318,8 @@ void cMyStatus::SetVolume(int volume, bool absolute)
 	Volume += volume;
     }
 
-    if (Volume != PlayerVolume) {
-	PlayerVolume = Volume;
-	PlayerSendVolume();
-    }
+    PlayerSetVolume(Volume);
 }
-
-/**
-**	Get volume.
-bool cMyStatus::GetVolume(int &volume, bool &mute)
-{
-}
-*/
 
 //////////////////////////////////////////////////////////////////////////////
 //	cControl
