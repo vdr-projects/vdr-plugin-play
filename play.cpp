@@ -455,7 +455,9 @@ eOSState cMyControl::ProcessKey(eKeys key)
 {
     eOSState state;
 
-    dsyslog("[play]%s: %d\n", __FUNCTION__, key);
+    if (key != kNone) {
+	dsyslog("[play]%s: key=%d\n", __FUNCTION__, key);
+    }
 
     if (!PlayerIsRunning()) {		// check if player is still alive
 	dsyslog("[play]: player died\n");
@@ -643,6 +645,9 @@ static void PlayFile(const char *filename)
 static char ShowBrowser;		///< flag show browser
 static const char *BrowserStartDir;	///< browser start directory
 static const NameFilter *BrowserFilters;	///< browser name filters
+static int DirStackSize;		///< size of directory stack
+static int DirStackUsed;		///< entries used of directory stack
+static char **DirStack;			///< current path directory stack
 
 /**
 **	Table of supported video suffixes.
@@ -686,8 +691,6 @@ static const NameFilter ImageFilters[] = {
 class cBrowser:public cOsdMenu
 {
   private:
-    int DirStackCount;			///< elements in directory stack
-    char **DirStack;			///< current path directory stack
     const NameFilter *Filter;		///< current filter
 
     /// Create a browser menu for current directory
@@ -700,8 +703,11 @@ class cBrowser:public cOsdMenu
     eOSState Selected(void);
 
   public:
+    /// File browser constructor
     cBrowser(const char *, const char *, const NameFilter *);
+    /// File browser destructor
     virtual ~ cBrowser();
+    /// Process keyboard input
     virtual eOSState ProcessKey(eKeys);
 };
 
@@ -729,7 +735,7 @@ void cBrowser::CreateMenu(void)
     //SetTitle(DirStack[0]);
     Skins.Message(mtStatus, tr("Scanning directory..."));
 
-    if (DirStackCount > 1) {
+    if (DirStackUsed > 1) {
 	// FIXME: should show only path
 	Add(new cOsdItem(DirStack[0]));
     }
@@ -764,12 +770,16 @@ void cBrowser::NewDir(const char *path, const NameFilter * filter)
 #endif
 
     // push on directory stack
-    DirStack =
-	(typeof(DirStack)) realloc(DirStack,
-	(DirStackCount + 1) * sizeof(*DirStack));
-    memmove(DirStack + 1, DirStack, DirStackCount * sizeof(*DirStack));
-    DirStackCount++;
+    if (DirStackUsed >= DirStackSize) {	// increase stack size
+	DirStackSize = DirStackUsed + 1;
+	DirStack =
+	    (typeof(DirStack)) realloc(DirStack,
+	    DirStackSize * sizeof(*DirStack));
+    }
+    memmove(DirStack + 1, DirStack, DirStackUsed * sizeof(*DirStack));
+    DirStackUsed++;
     DirStack[0] = pathname;
+
     Filter = filter;
 
     CreateMenu();
@@ -788,11 +798,24 @@ cBrowser::cBrowser(const char *title, const char *path,
 {
     dsyslog("[play]%s:\n", __FUNCTION__);
 
-    DirStack = NULL;
-    DirStackCount = 0;
+    if (path) {				// clear stack, start new
+	int i;
+
+	// free the stored directory stack
+	for (i = 0; i < DirStackUsed; ++i) {
+	    free(DirStack[i]);
+	}
+	//free(DirStack);
+	//DirStack = NULL;		// reuse the old stack
+	DirStackUsed = 0;
+
+	NewDir(path, filter);
+	return;
+    }
+
     Filter = filter;
 
-    NewDir(path, filter);
+    CreateMenu();
 }
 
 /**
@@ -800,15 +823,7 @@ cBrowser::cBrowser(const char *title, const char *path,
 */
 cBrowser::~cBrowser()
 {
-    int i;
-
     dsyslog("[play]%s:\n", __FUNCTION__);
-
-    // free the stored directory stack
-    for (i = 0; i < DirStackCount; ++i) {
-	free(DirStack[i]);
-    }
-    free(DirStack);
 }
 
 /**
@@ -819,13 +834,13 @@ eOSState cBrowser::LevelUp(void)
     char *down;
     char *name;
 
-    if (DirStackCount <= 1) {		// top level reached
+    if (DirStackUsed <= 1) {		// top level reached
 	return osEnd;
     }
     // go level up
-    --DirStackCount;
+    --DirStackUsed;
     down = DirStack[0];
-    memmove(DirStack, DirStack + 1, DirStackCount * sizeof(*DirStack));
+    memmove(DirStack, DirStack + 1, DirStackUsed * sizeof(*DirStack));
 
     Clear();
     CreateMenu();
@@ -869,7 +884,7 @@ eOSState cBrowser::Selected(void)
     item = Get(current);
     text = item->Text();
 
-    if (current == 0 && DirStackCount > 1) {
+    if (current == 0 && DirStackUsed > 1) {
 	return LevelUp();
     }
     // +2: \0 + #
@@ -915,10 +930,11 @@ eOSState cBrowser::ProcessKey(eKeys key)
 {
     eOSState state;
 
-    //
     // call standard function
     state = cOsdMenu::ProcessKey(key);
-    dsyslog("[play]%s: %x - %x\n", __FUNCTION__, state, key);
+    if (state || key != kNone) {
+	dsyslog("[play]%s: state=%d key=%d\n", __FUNCTION__, state, key);
+    }
 
     switch (state) {
 	case osUnknown:
@@ -994,8 +1010,9 @@ eOSState cPlayMenu::ProcessKey(eKeys key)
 {
     eOSState state;
 
-    dsyslog("[play]%s: %x\n", __FUNCTION__, key);
-
+    if (key != kNone) {
+	dsyslog("[play]%s: key=%d\n", __FUNCTION__, key);
+    }
     // call standard function
     state = cOsdMenu::ProcessKey(key);
 
@@ -1543,7 +1560,11 @@ cOsdObject *cMyPlugin::MainMenuAction(void)
     }
 #endif
     if (ShowBrowser) {
-	return new cBrowser("Browse", BrowserStartDir, BrowserFilters);
+	const char *start;
+
+	start = BrowserStartDir;	// root only one time
+	BrowserStartDir = NULL;
+	return new cBrowser("Browse", start, BrowserFilters);
     }
     return new cPlayMenu("Play");
 }
