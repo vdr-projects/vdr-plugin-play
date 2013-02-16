@@ -62,6 +62,8 @@ static const char *MAINMENUENTRY = trNOOP("Play");
 static char ConfigHideMainMenuEntry;	///< hide main menu entry
 static char ConfigDisableRemote;	///< disable remote during external play
 
+static volatile int DoMakePrimary;	///< switch primary device to this
+
 //////////////////////////////////////////////////////////////////////////////
 //	C Callbacks
 //////////////////////////////////////////////////////////////////////////////
@@ -247,6 +249,9 @@ cMyPlayer::~cMyPlayer()
     if (ConfigDisableRemote) {
 	RemoteEnable();
     }
+    // FIXME: wait until primary device is switched?
+    dsyslog("[play]: device %d->%d\n",
+	cDevice::PrimaryDevice()->DeviceNumber(), DoMakePrimary);
 }
 
 /**
@@ -351,6 +356,9 @@ class cMyControl:public cControl
 */
 void cMyControl::ShowReplayMode(void)
 {
+    dsyslog("[play]%s: %d - %d\n", __FUNCTION__, Setup.ShowReplayMode,
+	cOsd::IsOpen());
+
     // use vdr setup
     if (Display || (Setup.ShowReplayMode && !cOsd::IsOpen())) {
 	bool play;
@@ -416,7 +424,8 @@ cMyControl::~cMyControl()
     dsyslog("[play]%s\n", __FUNCTION__);
 
     delete Player;
-    delete Display;
+
+    //delete Display;
     delete Status;
 
     Hide();
@@ -724,6 +733,7 @@ extern "C" void cBrowser__Add(void *obj, const char *text)
 */
 void cBrowser::CreateMenu(void)
 {
+    Clear();				// start with empty directory
     // FIXME: should show only directory name in title
     //SetTitle(DirStack[0]);
     Skins.Message(mtStatus, tr("Scanning directory..."));
@@ -835,7 +845,6 @@ eOSState cBrowser::LevelUp(void)
     down = DirStack[0];
     memmove(DirStack, DirStack + 1, DirStackUsed * sizeof(*DirStack));
 
-    Clear();
     CreateMenu();
 
     // select item, where we gone down
@@ -887,7 +896,6 @@ eOSState cBrowser::Selected(void)
     if (!IsDirectory(filename)) {
 	if (IsArchive(filename)) {	// handle archives
 	    stpcpy(tmp, "#");
-	    Clear();
 	    NewDir(filename, Filter);
 	    free(filename);
 	    // FIXME: if dir fails use keep old!
@@ -907,7 +915,6 @@ eOSState cBrowser::Selected(void)
 	return osEnd;
     }
     stpcpy(tmp, "/");			// append '/'
-    Clear();
     NewDir(filename, Filter);
     free(filename);
     // FIXME: if dir fails use keep old!
@@ -1375,6 +1382,9 @@ void cMyMenuSetupPage::Store(void)
 //	cDevice
 //////////////////////////////////////////////////////////////////////////////
 
+/**
+**	Dummy device class.
+*/
 class cMyDevice:public cDevice
 {
   public:
@@ -1437,7 +1447,6 @@ void cMyDevice::GetOsdSize(int &width, int &height, double &pixel_aspect)
 //////////////////////////////////////////////////////////////////////////////
 
 static cMyDevice *MyDevice;		///< dummy device needed for osd
-static volatile int DoMakePrimary;	///< switch primary device to this
 
 class cMyPlugin:public cPlugin
 {
@@ -1687,6 +1696,7 @@ extern "C" void EnableDummyDevice(void)
 {
     OldPrimaryDevice = cDevice::PrimaryDevice()->DeviceNumber() + 1;
     DoMakePrimary = MyDevice->DeviceNumber() + 1;
+    cOsdProvider::Shutdown();
 }
 
 /**
@@ -1696,6 +1706,7 @@ extern "C" void DisableDummyDevice(void)
 {
     DoMakePrimary = OldPrimaryDevice;
     OldPrimaryDevice = 0;
+    cOsdProvider::Shutdown();
 }
 
 VDRPLUGINCREATOR(cMyPlugin);		// Don't touch this!
