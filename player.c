@@ -620,6 +620,37 @@ void PlayerStop(void)
 {
     PlayerThreadExit();
 
+    //
+    //	stop mplayer, if it is still running.
+    //
+    if (PlayerIsRunning()) {
+	int waittime;
+	int timeout;
+
+	waittime = 0;
+	timeout = 500;			// 0.5s
+
+	kill(PlayerPid, SIGTERM);
+	// wait for player finishing, with timeout
+	while (PlayerIsRunning() && waittime++ < timeout) {
+	    usleep(1 * 1000);
+	}
+	if (PlayerIsRunning()) {	// still running
+	    waittime = 0;
+	    timeout = 500;		// 0.5s
+
+	    kill(PlayerPid, SIGKILL);
+	    // wait for player finishing, with timeout
+	    while (PlayerIsRunning() && waittime++ < timeout) {
+		usleep(1 * 1000);
+	    }
+	    if (PlayerIsRunning()) {
+		Error(_("play: can't stop player\n"));
+	    }
+	}
+    }
+    PlayerPid = 0;
+
     if (ConfigOsdOverlay) {
 	DisableDummyDevice();
 	VideoExit();
