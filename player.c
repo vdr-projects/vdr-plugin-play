@@ -55,6 +55,9 @@ static char *ConfigMixerChannel;	///< audio mixer channel
 static const char *ConfigMplayer = "/usr/bin/mplayer";	///< mplayer executable
 static const char *ConfigMplayerArguments;	///< extra mplayer arguments
 static const char *ConfigX11Display = ":0.0";	///< x11 display
+
+    /// DVD-Drive for mplayer
+static const char *ConfigMplayerDevice = "/dev/dvd";
 static uint32_t ConfigColorKey = 0x00020507;	///< color key
 
 //////////////////////////////////////////////////////////////////////////////
@@ -283,7 +286,10 @@ static void PlayerExec(const char *filename)
     args[11] = "-noconsolecontrols";
     args[12] = "-fixed-vo";
     argn = 13;
-    // FIXME: dvd-device
+    if (ConfigMplayerDevice) {		// dvd-device
+	args[argn++] = "-dvd-device";
+	args[argn++] = ConfigMplayerDevice;
+    }
     if (!strncasecmp(filename, "cdda://", 7)) {
 	args[argn++] = "-cache";	// cdrom needs cache
 	args[argn++] = "1000";
@@ -709,7 +715,8 @@ void PlayerSetVolume(int volume)
 */
 const char *CommandLineHelp(void)
 {
-    return "  -/\t\tbrowser root directory\n"
+    return "  -% device\tmplayer dvd device\n"
+	"  -/\t/dir\tbrowser root directory\n"
 	"  -a audio\tmplayer -ao (alsa:device=hw=0.0) overwrites mplayer.conf\n"
 	"  -d display\tX11 display (default :0.0) overwrites $DISPLAY\n"
 	"  -f\t\tmplayer fullscreen playback\n"
@@ -745,7 +752,10 @@ int ProcessArgs(int argc, char *const argv[])
     }
 
     for (;;) {
-	switch (getopt(argc, argv, "-/:b:d:fg:k:m:M:osv:")) {
+	switch (getopt(argc, argv, "-%:/:b:d:fg:k:m:M:osv:")) {
+	    case '%':			// dvd-device
+		ConfigMplayerDevice = optarg;
+		continue;
 	    case '/':			// browser root
 		ConfigBrowserRoot = optarg;
 		continue;
