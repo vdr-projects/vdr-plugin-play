@@ -590,7 +590,8 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    cRemote::CallPlugin("play");
 	    return osBack;
 
-	case kMenu:
+	case kMenu:			// VDR: eats the keys
+	case k5:
 	    if (PlayerDvdNav) {
 		PlayerSendDvdNavMenu();
 		break;
