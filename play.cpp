@@ -1009,6 +1009,10 @@ eOSState cPlayMenu::ProcessKey(eKeys key)
 	    BrowserFilters = NULL;
 	    return osPlugin;		// restart with OSD browser
 
+	case osUser2:
+	    Skins.Message(mtStatus, tr("Function not working yet, use 3 or 4"));
+	    return osContinue;
+
 	case osUser3:			// play audio cdrom
 	    PlayFile("cdda://");
 	    return osEnd;
