@@ -131,11 +131,11 @@ static int PlayerPipeIdx;		///< pipe buffer index
 static int PlayerPipeOut[2];		///< player write pipe
 static int PlayerPipeIn[2];		///< player read pipe
 
-static char DvdNav;			///< dvdnav active
-
 static int PlayerVolume = -1;		///< volume 0 - 100
-static char PlayerPaused;		///< player paused
-static char PlayerSpeed;		///< player playback speed
+
+char PlayerDvdNav;			///< dvdnav active
+char PlayerPaused;			///< player paused
+char PlayerSpeed;			///< player playback speed
 
 //////////////////////////////////////////////////////////////////////////////
 //	Slave
@@ -153,9 +153,9 @@ static void PlayerParseLine(const char *data, int size)
 
     // data is \0 terminated
     if (!strncasecmp(data, "DVDNAV_TITLE_IS_MENU", 20)) {
-	DvdNav = 1;
+	PlayerDvdNav = 1;
     } else if (!strncasecmp(data, "DVDNAV_TITLE_IS_MOVIE", 21)) {
-	DvdNav = 2;
+	PlayerDvdNav = 2;
     } else if (!strncasecmp(data, "ID_DVD_VOLUME_ID=", 17)) {
 	Debug(3, "DVD_VOLUME = %s\n", data + 17);
     } else if (!strncasecmp(data, "ID_AID_", 7)) {
@@ -508,6 +508,8 @@ static void PlayerThreadExit(void)
 
 /**
 **	Send command to player.
+**
+**	@param formst	printf format string
 */
 static void SendCommand(const char *format, ...)
 {
@@ -556,6 +558,8 @@ void PlayerSendPause(void)
 
 /**
 **	Send player speed_set.
+**
+**	@param speed	mplayer speed
 */
 void PlayerSendSetSpeed(int speed)
 {
@@ -566,6 +570,8 @@ void PlayerSendSetSpeed(int speed)
 
 /**
 **	Send player seek.
+**
+**	@param seconds	seek in seconds relative to current position
 */
 void PlayerSendSeek(int seconds)
 {
@@ -583,6 +589,96 @@ void PlayerSendVolume(void)
 	// FIXME: %.2f could have a problem with LANG
 	SendCommand("pausing_keep volume %.2f 1\n",
 	    (PlayerVolume * 100.0) / 255);
+    }
+}
+
+/**
+**	Send switch audio track.
+*/
+void PlayerSendSwitchAudio(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep switch_audio\n");
+    }
+}
+
+/**
+**	Send select subtitle.
+*/
+void PlayerSendSubSelect(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep sub_select\n");
+    }
+}
+
+/**
+**	Send up for dvdnav.
+*/
+void PlayerSendDvdNavUp(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep dvdnav up\n");
+    }
+}
+
+/**
+**	Send down for dvdnav.
+*/
+void PlayerSendDvdNavDown(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep dvdnav down\n");
+    }
+}
+
+/**
+**	Send left for dvdnav.
+*/
+void PlayerSendDvdNavLeft(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep dvdnav left\n");
+    }
+}
+
+/**
+**	Send right for dvdnav.
+*/
+void PlayerSendDvdNavRight(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep dvdnav right\n");
+    }
+}
+
+/**
+**	Send select for dvdnav.
+*/
+void PlayerSendDvdNavSelect(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep dvdnav select\n");
+    }
+}
+
+/**
+**	Send prev for dvdnav.
+*/
+void PlayerSendDvdNavPrev(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep dvdnav prev\n");
+    }
+}
+
+/**
+**	Send menu for dvdnav.
+*/
+void PlayerSendDvdNavMenu(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("pausing_keep dvdnav menu\n");
     }
 }
 
@@ -605,7 +701,7 @@ void PlayerStart(const char *filename)
     PlayerPaused = 0;
     PlayerSpeed = 1;
 
-    DvdNav = 0;
+    PlayerDvdNav = 0;
 
     if (ConfigOsdOverlay) {		// overlay wanted
 	VideoSetColorKey(ConfigColorKey);

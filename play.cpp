@@ -185,20 +185,6 @@ extern "C" void DrawText(int x, int y, const char *s, uint32_t fg, uint32_t bg,
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
-//	Play
-//////////////////////////////////////////////////////////////////////////////
-
-static char DvdNav;			///< dvdnav active
-static char PlayerPaused;		///< player paused
-static char PlayerSpeed;		///< player playback speed
-
-#define PlayerSendQuit()
-#define PlayerSendPause()
-#define PlayerSendSetSpeed(x)
-#define PlayerSendSeek(x)
-#define SendCommand(x)
-
-//////////////////////////////////////////////////////////////////////////////
 //	cPlayer
 //////////////////////////////////////////////////////////////////////////////
 
@@ -471,8 +457,8 @@ eOSState cMyControl::ProcessKey(eKeys key)
     state = osContinue;
     switch ((int)key) {			// cast to shutup g++ warnings
 	case kUp:
-	    if (DvdNav) {
-		SendCommand("pausing_keep dvdnav up\n");
+	    if (PlayerDvdNav) {
+		PlayerSendDvdNavUp();
 		break;
 	    }
 	case kPlay:
@@ -488,8 +474,8 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    break;
 
 	case kDown:
-	    if (DvdNav) {
-		SendCommand("pausing_keep dvdnav down\n");
+	    if (PlayerDvdNav) {
+		PlayerSendDvdNavDown();
 		break;
 	    }
 	case kPause:
@@ -506,8 +492,8 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    // FIXME:
 	    break;
 	case kLeft:
-	    if (DvdNav) {
-		SendCommand("pausing_keep dvdnav left\n");
+	    if (PlayerDvdNav) {
+		PlayerSendDvdNavLeft();
 		break;
 	    }
 	case kFastRew:
@@ -519,8 +505,8 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    ShowReplayMode();
 	    break;
 	case kRight:
-	    if (DvdNav) {
-		SendCommand("pausing_keep dvdnav right\n");
+	    if (PlayerDvdNav) {
+		PlayerSendDvdNavRight();
 		break;
 	    }
 	case kFastFwd:
@@ -585,9 +571,9 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    return osEnd;
 
 	case kOk:
-	    if (DvdNav) {
-		SendCommand("pausing_keep dvdnav select\n");
-		// FIXME: DvdNav = 0;
+	    if (PlayerDvdNav) {
+		PlayerSendDvdNavSelect();
+		// FIXME: PlayerDvdNav = 0;
 		break;
 	    }
 	    // FIXME: full mode
@@ -595,8 +581,8 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    break;
 
 	case kBack:
-	    if (DvdNav > 1) {
-		SendCommand("pausing_keep dvdnav prev\n");
+	    if (PlayerDvdNav > 1) {
+		PlayerSendDvdNavPrev();
 		break;
 	    }
 	    PlayerSendQuit();
@@ -605,8 +591,8 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    return osBack;
 
 	case kMenu:
-	    if (DvdNav) {
-		SendCommand("pausing_keep dvdnav menu\n");
+	    if (PlayerDvdNav) {
+		PlayerSendDvdNavMenu();
 		break;
 	    }
 	    break;
@@ -614,12 +600,12 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	case kAudio:			// VDR: eats the keys
 	case k7:
 	    // FIXME: audio menu
-	    SendCommand("pausing_keep switch_audio\n");
+	    PlayerSendSwitchAudio();
 	    break;
 	case kSubtitles:		// VDR: eats the keys
 	case k9:
 	    // FIXME: subtitle menu
-	    SendCommand("pausing_keep sub_select\n");
+	    PlayerSendSubSelect();
 	    break;
 
 	default:

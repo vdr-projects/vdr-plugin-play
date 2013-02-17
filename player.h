@@ -100,6 +100,9 @@ extern "C"
     /// Browser root=start directory
     extern const char *ConfigBrowserRoot;
     extern const char *X11DisplayName;	///< x11 display name
+    extern char PlayerDvdNav;		///< dvdnav active
+    extern char PlayerPaused;		///< player paused
+    extern char PlayerSpeed;		///< player playback speed
 
     /// Start external player
     extern void PlayerStart(const char *name);
@@ -110,6 +113,33 @@ extern "C"
 
     /// Set player volume
     extern void PlayerSetVolume(int);
+
+    /// Player send quit command
+    extern void PlayerSendQuit(void);
+    /// Player send toggle pause command
+    extern void PlayerSendPause(void);
+    /// Player send set play speed
+    extern void PlayerSendSetSpeed(int);
+    /// Player send seek
+    extern void PlayerSendSeek(int);
+    /// Player send switch audio track
+    extern void PlayerSendSwitchAudio(void);
+    /// Player send select subtitle
+    extern void PlayerSendSubSelect(void);
+    /// Player send dvd-nav up
+    extern void PlayerSendDvdNavUp(void);
+    /// Player send dvd-nav down
+    extern void PlayerSendDvdNavDown(void);
+    /// Player send dvd-nav left
+    extern void PlayerSendDvdNavLeft(void);
+    /// Player send dvd-nav right
+    extern void PlayerSendDvdNavRight(void);
+    /// Player send dvd-nav menu select
+    extern void PlayerSendDvdNavSelect(void);
+    /// Player send dvd-nav menu prev
+    extern void PlayerSendDvdNavPrev(void);
+    /// Player send dvd-nav prev
+    extern void PlayerSendDvdNavMenu(void);
 
 #ifdef __cplusplus
 }
