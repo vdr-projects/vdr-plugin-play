@@ -19,8 +19,8 @@ GIT_REV = $(shell git describe --always 2>/dev/null)
 ### Configuration (edit this for your needs)
 
 CONFIG := #-DDEBUG
-	# autodetect: use a virtual file system
-CONFIG += $(shell test -x /usr/bin/avfs-config && echo "-DUSE_AVFS")
+	# autodetect: use a virtual file system (don't use corrupts memory)
+#CONFIG += $(shell test -x /usr/bin/avfs-config && echo "-DUSE_AVFS")
 	# autodetect: use ffmpeg software scale  
 CONFIG += $(shell pkg-config --exists libswscale && echo "-DUSE_SWSCALE")
 	# autodetect: support png images
@@ -90,7 +90,7 @@ override LIBS += $(_LIBS)
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o dia.o video.o readdir.o
+OBJS = $(PLUGIN).o player.o video.o readdir.o
 SRCS = $(wildcard $(OBJS:.o=.c)) $(PLUGIN).cpp
 
 ### The main target:
