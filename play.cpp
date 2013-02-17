@@ -1013,24 +1013,24 @@ eOSState cPlayMenu::ProcessKey(eKeys key)
 	    Skins.Message(mtStatus, tr("Function not working yet, use 3 or 4"));
 	    return osContinue;
 
-	case osUser3:			// play audio cdrom
+	case osUser5:			// play audio cdrom
 	    PlayFile("cdda://");
 	    return osEnd;
-	case osUser4:			// play dvd
+	case osUser6:			// play dvd
 	    PlayFile("dvdnav://");
 	    return osEnd;
 
-	case osUser5:
+	case osUser7:
 	    ShowBrowser = 1;
 	    BrowserStartDir = ConfigBrowserRoot;
 	    BrowserFilters = AudioFilters;
 	    return osPlugin;		// restart with OSD browser
-	case osUser6:
+	case osUser8:
 	    ShowBrowser = 1;
 	    BrowserStartDir = ConfigBrowserRoot;
 	    BrowserFilters = ImageFilters;
 	    return osPlugin;		// restart with OSD browser
-	case osUser7:
+	case osUser9:
 	    ShowBrowser = 1;
 	    BrowserStartDir = ConfigBrowserRoot;
 	    BrowserFilters = VideoFilters;
