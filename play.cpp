@@ -627,6 +627,64 @@ static void PlayFile(const char *filename)
     cControl::Launch(new cMyControl(filename));
 }
 
+/**
+**	Check if filename is an iso dvd image.
+**
+**	@param filename	path and file name
+**
+**	@retval	true	archive
+**	@retval false	no archive
+*/
+static int IsIsoImage(const char *filename)
+{
+
+    /**
+    **	Table of supported iso image suffixes.
+    */
+    static const NameFilter IsoFilters[] = {
+#define FILTER(x) { sizeof(x) - 1, x }
+	FILTER(".bin"),
+	FILTER(".dvd"),
+	FILTER(".img"),
+	FILTER(".iso"),
+	FILTER(".mdf"),
+	FILTER(".nrg"),
+#undef FILTER
+	{0, NULL}
+    };
+    int i;
+    int len;
+
+    len = strlen(filename);
+    for (i = 0; IsoFilters[i].String; ++i) {
+	if (len >= IsoFilters[i].Length
+	    && !strcasecmp(filename + len - IsoFilters[i].Length,
+		IsoFilters[i].String)) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+/**
+**	Play a file, with type detection.
+**
+**	@param filename	path and file name
+*/
+static void PlayFileHandleType(const char *filename)
+{
+    if (IsIsoImage(filename)) {		// handle dvd iso images
+	char *tmp;
+
+	tmp = (char *)malloc(sizeof("dvdnav:///") + strlen(filename));
+	stpcpy(stpcpy(tmp, "dvdnav:///"), filename);
+	PlayFile(tmp);
+	free(tmp);
+	return;
+    }
+    PlayFile(filename);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 //	cOsdMenu
 //////////////////////////////////////////////////////////////////////////////
@@ -888,7 +946,7 @@ eOSState cBrowser::Selected(void)
 	    // FIXME: if dir fails use keep old!
 	    return osContinue;
 	}
-	PlayFile(filename);
+	PlayFileHandleType(filename);
 	free(filename);
 	return osEnd;
     }

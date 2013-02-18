@@ -756,7 +756,7 @@ void PlayerStop(void)
 	}
     }
     PlayerPid = 0;
-    PlayerClosesPipe();
+    PlayerClosePipes();
 
     if (ConfigOsdOverlay) {
 	DisableDummyDevice();
