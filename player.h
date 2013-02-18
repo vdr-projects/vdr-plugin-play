@@ -99,6 +99,8 @@ extern "C"
 
     /// Browser root=start directory
     extern const char *ConfigBrowserRoot;
+    ///< Disable remote during external play
+    extern char ConfigDisableRemote;
     extern const char *X11DisplayName;	///< x11 display name
     extern char PlayerDvdNav;		///< dvdnav active
     extern char PlayerPaused;		///< player paused

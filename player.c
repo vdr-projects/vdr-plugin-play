@@ -278,7 +278,11 @@ static void PlayerExec(const char *filename)
 	args[4] = "-ontop";
     }
     args[5] = "-noborder";
-    args[6] = "-nolirc";
+    if (ConfigDisableRemote) {
+	args[6] = "-lirc";
+    } else {
+	args[6] = "-nolirc";
+    }
     args[7] = "-nojoystick";		// disable all unwanted inputs
     args[8] = "-noar";
     args[9] = "-nomouseinput";
@@ -435,7 +439,7 @@ static void PlayerForkAndExec(const char *filename)
 /**
 **	Close pipes.
 */
-void PlaserClosePipes(void)
+static void PlayerClosePipes(void)
 {
     if (ConfigUseSlave) {
 	if (PlayerPipeIn[0] != -1) {
@@ -752,6 +756,7 @@ void PlayerStop(void)
 	}
     }
     PlayerPid = 0;
+    PlayerClosesPipe();
 
     if (ConfigOsdOverlay) {
 	DisableDummyDevice();

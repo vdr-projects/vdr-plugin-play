@@ -60,7 +60,7 @@ static const char *MAINMENUENTRY = trNOOP("Play");
 //////////////////////////////////////////////////////////////////////////////
 
 static char ConfigHideMainMenuEntry;	///< hide main menu entry
-static char ConfigDisableRemote;	///< disable remote during external play
+char ConfigDisableRemote;		///< disable remote during external play
 
 static volatile int DoMakePrimary;	///< switch primary device to this
 
@@ -1011,7 +1011,8 @@ eOSState cPlayMenu::ProcessKey(eKeys key)
 	    return osPlugin;		// restart with OSD browser
 
 	case osUser2:
-	    Skins.Message(mtStatus, tr("Function not working yet, use 3 or 4"));
+	    Skins.Message(mtStatus,
+		tr("Function not working yet, use 3 or 4"));
 	    return osContinue;
 
 	case osUser5:			// play audio cdrom
