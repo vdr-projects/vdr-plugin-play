@@ -464,8 +464,9 @@ static void *PlayerHandlerThread(void *dummy)
 {
     Debug(3, "play: player thread started\n");
 
-    while (PlayerIsRunning()) {
-	if (ConfigUseSlave) {
+    // Need: thread for video poll: while (PlayerIsRunning())
+    for (;;) {
+	if (ConfigUseSlave && PlayerIsRunning()) {
 	    PlayerPollPipe();
 	    // FIXME: wait only if pipe not ready
 	}
