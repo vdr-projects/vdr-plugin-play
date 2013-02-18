@@ -15,7 +15,7 @@ PLUGIN = play
 # FIXME: AVFS isn't working, corrupts memory
 #AVFS ?= $(shell test -x /usr/bin/avfs-config && echo 1)
     # use ffmpeg libswscale
-SWCALE ?= $(shell pkg-config --exists libswscale && echo 1)
+SWSCALE ?= $(shell pkg-config --exists libswscale && echo 1)
     # support png images
 PNG ?= $(shell pkg-config --exists libpng && echo 1)
     # support jpg images
