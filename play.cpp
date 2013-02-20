@@ -242,6 +242,8 @@ cMyPlayer::~cMyPlayer()
 
 /**
 **	Player attached or detached.
+**
+**	@param on	flag turn player on or off
 */
 void cMyPlayer::Activate(bool on)
 {
@@ -293,7 +295,9 @@ cMyStatus *Status;			///< status monitor for volume
 */
 cMyStatus::cMyStatus(void)
 {
-    Volume = 0;
+    Volume = cDevice::CurrentVolume();
+
+    dsyslog("[play]: status volume %d\n", Volume);
 }
 
 /**
@@ -330,8 +334,8 @@ class cMyControl:public cControl
     virtual void Hide(void);		///< hide replay control
 
   public:
-    cMyControl(const char *);
-    virtual ~ cMyControl();
+    cMyControl(const char *);		///< player control constructor
+    virtual ~ cMyControl();		///< player control destructor
 
     virtual eOSState ProcessKey(eKeys);	///< handle keyboard input
 
@@ -451,6 +455,7 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	dsyslog("[play]: player died\n");
 	Hide();
 	//FIXME: Stop();
+	cControl::Shutdown();
 	return osEnd;
     }
     //state=cOsdMenu::ProcessKey(key);
@@ -566,8 +571,10 @@ eOSState cMyControl::ProcessKey(eKeys key)
 
 	case kStop:
 	case kBlue:
+	    dsyslog("[play]: player stopped\n");
 	    Hide();
 	    // FIXME: Stop();
+	    cControl::Shutdown();
 	    return osEnd;
 
 	case kOk:
@@ -587,6 +594,7 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    }
 	    PlayerSendQuit();
 	    // FIXME: need to select old directory and index
+	    // FIXME: this shows a half drawn OSD
 	    cRemote::CallPlugin("play");
 	    return osBack;
 
@@ -1606,7 +1614,6 @@ cOsdObject *cMyPlugin::MainMenuAction(void)
     //dsyslog("[play]%s:\n", __FUNCTION__);
 
 #if 0
-    printf("plugin %s %d\n", ShowDiashow, ShowBrowser);
     if (ShowDiashow) {
 	return new cDiashow(ShowDiashow);
     }
@@ -1745,8 +1752,14 @@ int OldPrimaryDevice;			///< old primary device
 extern "C" void EnableDummyDevice(void)
 {
     OldPrimaryDevice = cDevice::PrimaryDevice()->DeviceNumber() + 1;
+
+    dsyslog("[play]: primary device %d to new %d\n", OldPrimaryDevice,
+	MyDevice->DeviceNumber() + 1);
+
+    //if (!cDevice::SetPrimaryDevice(MyDevice->DeviceNumber() + 1)) {
     DoMakePrimary = MyDevice->DeviceNumber() + 1;
     cOsdProvider::Shutdown();
+    //}
 }
 
 /**
@@ -1754,9 +1767,14 @@ extern "C" void EnableDummyDevice(void)
 */
 extern "C" void DisableDummyDevice(void)
 {
+    dsyslog("[play]: primary device %d to old %d\n",
+	cDevice::PrimaryDevice()->DeviceNumber() + 1, OldPrimaryDevice);
+
+    //if (!cDevice::SetPrimaryDevice(OldPrimaryDevice)) {
     DoMakePrimary = OldPrimaryDevice;
     OldPrimaryDevice = 0;
     cOsdProvider::Shutdown();
+    //}
 }
 
 VDRPLUGINCREATOR(cMyPlugin);		// Don't touch this!
