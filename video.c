@@ -509,26 +509,29 @@ static void VideoKeyPress(const xcb_key_press_event_t * event)
 	    FeedKeyPress("XKeySym", "Blue", 0, 0);
 	    break;
 
+	case XF86XK_HomePage:
+	    FeedKeyPress("XKeySym", "XF86HomePage", 0, 0);
+	    break;
 	case XF86XK_AudioLowerVolume:
-	    FeedKeyPress("XKeySym", "AudioLowerVolume", 0, 0);
+	    FeedKeyPress("XKeySym", "XF86AudioLowerVolume", 0, 0);
 	    break;
 	case XF86XK_AudioMute:
-	    FeedKeyPress("XKeySym", "AudioMute", 0, 0);
+	    FeedKeyPress("XKeySym", "XF86AudioMute", 0, 0);
 	    break;
 	case XF86XK_AudioRaiseVolume:
-	    FeedKeyPress("XKeySym", "AudioRaiseVolume", 0, 0);
+	    FeedKeyPress("XKeySym", "XF86AudioRaiseVolume", 0, 0);
 	    break;
 	case XF86XK_AudioPlay:
-	    FeedKeyPress("XKeySym", "AudioPlay", 0, 0);
+	    FeedKeyPress("XKeySym", "XF86AudioPlay", 0, 0);
 	    break;
 	case XF86XK_AudioStop:
-	    FeedKeyPress("XKeySym", "AudioStop", 0, 0);
+	    FeedKeyPress("XKeySym", "XF86AudioStop", 0, 0);
 	    break;
 	case XF86XK_AudioPrev:
-	    FeedKeyPress("XKeySym", "AudioPrev", 0, 0);
+	    FeedKeyPress("XKeySym", "XF86AudioPrev", 0, 0);
 	    break;
 	case XF86XK_AudioNext:
-	    FeedKeyPress("XKeySym", "AudioNext", 0, 0);
+	    FeedKeyPress("XKeySym", "XF86AudioNext", 0, 0);
 	    break;
 
 	default:
@@ -758,6 +761,10 @@ void VideoExit(void)
     if (VideoPixmap != XCB_NONE) {
 	xcb_free_pixmap(Connection, VideoPixmap);
 	VideoPixmap = XCB_NONE;
+    }
+    if (XcbKeySymbols != XCB_NONE) {
+	xcb_key_symbols_free(XcbKeySymbols);
+	XcbKeySymbols = XCB_NONE;
     }
 
     if (Connection) {
