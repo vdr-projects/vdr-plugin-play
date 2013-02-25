@@ -1,2 +1,7 @@
-Can autodetect color key.
-ffodivxvdpau not always supported.
+mplayer:
+	Can autodetect color key.
+	ffodivxvdpau not always supported.
+
+Feature requests:
+	resume
+	service interface to play files

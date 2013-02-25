@@ -289,7 +289,13 @@ static void PlayerExec(const char *filename)
     args[10] = "-nograbpointer";
     args[11] = "-noconsolecontrols";
     args[12] = "-fixed-vo";
-    argn = 13;
+    args[13] = "-sid";			// subtitle selection
+    args[14] = "0";
+    args[15] = "-slang";
+    args[16] = "de,en";			// FIXME: use VDR config
+    args[17] = "-alang";
+    args[18] = "de,en";			// FIXME: use VDR config
+    argn = 19;
     if (ConfigMplayerDevice) {		// dvd-device
 	args[argn++] = "-dvd-device";
 	args[argn++] = ConfigMplayerDevice;
@@ -854,7 +860,7 @@ int ProcessArgs(int argc, char *const argv[])
     }
 
     for (;;) {
-	switch (getopt(argc, argv, "-%:/:b:d:fg:k:m:M:osv:")) {
+	switch (getopt(argc, argv, "-%:/:a:b:d:fg:k:m:M:osv:")) {
 	    case '%':			// dvd-device
 		ConfigMplayerDevice = optarg;
 		continue;

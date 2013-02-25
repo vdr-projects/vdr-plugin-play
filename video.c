@@ -563,6 +563,7 @@ void VideoPollEvents(int timeout)
 	xcb_flush(Connection);
 
 	// wait for events or timeout
+	// FIXME: this can poll forever
 	if ((n = poll(fds, 1, delay)) <= 0) {
 	    // error or timeout
 	    if (n) {			// error
