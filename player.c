@@ -378,13 +378,14 @@ static void PlayerExec(const char *filename)
 	while ((sval = strsep(&s, " \t"))) {
 	    args[argn++] = sval;
 
-	    if (argn == MPLAYER_MAX_ARGS - 2) {	// argument overflow
+	    if (argn == MPLAYER_MAX_ARGS - 3) {	// argument overflow
 		Error(_("play: too many arguments for mplayer\n"));
 		// argn = 1;
 		break;
 	    }
 	}
     }
+    args[argn++] = "--";
     args[argn++] = filename;
     args[argn] = NULL;
 #ifdef DEBUG
@@ -495,7 +496,7 @@ static void *PlayerHandlerThread(void *dummy)
 static void PlayerThreadInit(void)
 {
     pthread_create(&PlayerThread, NULL, PlayerHandlerThread, NULL);
-    pthread_setname_np(PlayerThread, "play player");
+    //pthread_setname_np(PlayerThread, "play player");
 }
 
 /**
