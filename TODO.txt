@@ -1,3 +1,6 @@
+video:
+	add support for _NET_WM_STATE = _NET_WM_STATE_FULLSCREEN
+
 mplayer:
 	Can autodetect color key.
 	ffodivxvdpau not always supported.

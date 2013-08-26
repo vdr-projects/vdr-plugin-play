@@ -1088,17 +1088,17 @@ eOSState cPlayMenu::ProcessKey(eKeys key)
 	    PlayFile("dvdnav://");
 	    return osEnd;
 
-	case osUser7:
+	case osUser7:			// browse audio
 	    ShowBrowser = 1;
 	    BrowserStartDir = ConfigBrowserRoot;
 	    BrowserFilters = AudioFilters;
 	    return osPlugin;		// restart with OSD browser
-	case osUser8:
+	case osUser8:			// browse images
 	    ShowBrowser = 1;
 	    BrowserStartDir = ConfigBrowserRoot;
 	    BrowserFilters = ImageFilters;
 	    return osPlugin;		// restart with OSD browser
-	case osUser9:
+	case osUser9:			// browse videos
 	    ShowBrowser = 1;
 	    BrowserStartDir = ConfigBrowserRoot;
 	    BrowserFilters = VideoFilters;
