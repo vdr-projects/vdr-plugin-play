@@ -3,7 +3,7 @@
 ///
 ///	Copyright (c) 2012, 2013 by Johns.  All Rights Reserved.
 ///
-///	Contributor(s):
+///	Contributor(s): Dennis Bendlin
 ///
 ///	License: AGPLv3
 ///
@@ -105,6 +105,10 @@ extern "C"
     extern char PlayerDvdNav;		///< dvdnav active
     extern char PlayerPaused;		///< player paused
     extern char PlayerSpeed;		///< player playback speed
+    extern int PlayerCurrent;		///< current postion in seconds
+    extern int PlayerTotal;		///< total length in seconds
+    extern char PlayerTitle[256];	///< title from meta data
+    extern char PlayerFilename[256];	///< filename
 
     /// Start external player
     extern void PlayerStart(const char *name);
@@ -142,6 +146,14 @@ extern "C"
     extern void PlayerSendDvdNavPrev(void);
     /// Player send dvd-nav prev
     extern void PlayerSendDvdNavMenu(void);
+    /// Get length in seconds.
+    extern void PlayerGetLength(void);
+    /// Get current position in seconds.
+    extern void PlayerGetCurrentPosition(void);
+    /// Get title from meta data.
+    extern void PlayerGetMetaTitle(void);
+    /// Get filename.
+    extern void PlayerGetFilename(void);
 
 #ifdef __cplusplus
 }

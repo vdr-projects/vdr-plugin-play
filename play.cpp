@@ -3,7 +3,7 @@
 ///
 ///	Copyright (c) 2012, 2013 by Johns.  All Rights Reserved.
 ///
-///	Contributor(s):
+///	Contributor(s): Dennis Bendlin
 ///
 ///	License: AGPLv3
 ///
@@ -263,7 +263,11 @@ bool cMyPlayer::GetReplayMode(bool & play, bool & forward, int &speed)
 {
     play = !PlayerPaused;
     forward = true;
-    speed = play ? PlayerSpeed : -1;
+    if (PlayerSpeed == 1) {
+	speed = -1;
+    } else {
+	speed = PlayerSpeed;
+    }
     return true;
 }
 
@@ -332,6 +336,8 @@ class cMyControl:public cControl
     void ShowProgress(void);		///< display progress bar
     virtual void Show(void);		///< show replay control
     virtual void Hide(void);		///< hide replay control
+    bool infoVisible;			///< RecordingInfo visible
+    time_t timeoutShow;			///< timeout shown control
 
   public:
     cMyControl(const char *);		///< player control constructor
@@ -373,7 +379,38 @@ void cMyControl::ShowReplayMode(void)
 */
 void cMyControl::ShowProgress(void)
 {
-    // FIXME:
+    if (Display || (!cOsd::IsOpen())) {
+	bool play;
+	bool forward;
+	int speed;
+
+	if (GetReplayMode(play, forward, speed)) {
+	    if (!Display) {
+		Display = Skins.Current()->DisplayReplay(false);
+	    }
+
+	    if (!infoVisible) {
+		infoVisible = true;
+		timeoutShow = time(0) + Setup.ChannelInfoTime;
+		PlayerGetLength();
+		PlayerGetMetaTitle();
+		PlayerGetFilename();
+	    }
+
+	    PlayerGetCurrentPosition();
+	    if (strcmp(PlayerTitle, "") != 0) {
+		Display->SetTitle(PlayerTitle);
+	    } else {
+		Display->SetTitle(PlayerFilename);
+	    }
+	    Display->SetProgress(PlayerCurrent, PlayerTotal);
+	    Display->SetMode(play, forward, speed);
+	    Display->SetCurrent(IndexToHMSF(PlayerCurrent, false, 1));
+	    Display->SetTotal(IndexToHMSF(PlayerTotal, false, 1));
+	}
+	SetNeedsFastResponse(true);
+	Skins.Flush();
+    }
 }
 
 /**
@@ -382,9 +419,10 @@ void cMyControl::ShowProgress(void)
 void cMyControl::Show(void)
 {
     dsyslog("[play]%s:\n", __FUNCTION__);
-    if (!Display) {
+    if (Setup.ShowReplayMode)
+	ShowReplayMode();
+    else
 	ShowProgress();
-    }
 }
 
 /**
@@ -397,6 +435,7 @@ cMyControl::cMyControl(const char *filename)
 {
     Display = NULL;
     Status = new cMyStatus;		// start monitoring volume
+    infoVisible = false;
 
     //LastSkipKey = kNone;
     //LastSkipSeconds = REPLAYCONTROLSKIPSECONDS;
@@ -458,6 +497,15 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	cControl::Shutdown();
 	return osEnd;
     }
+
+    if (infoVisible) {			// if RecordingInfo visible then update
+	if (timeoutShow && time(0) > timeoutShow) {
+	    Hide();
+	    timeoutShow = 0;
+	    infoVisible = false;
+	} else
+	    ShowProgress();
+    }
     //state=cOsdMenu::ProcessKey(key);
     state = osContinue;
     switch ((int)key) {			// cast to shutup g++ warnings
@@ -475,7 +523,7 @@ eOSState cMyControl::ProcessKey(eKeys key)
 		PlayerSendPause();
 		PlayerPaused ^= 1;
 	    }
-	    ShowReplayMode();
+	    Show();
 	    break;
 
 	case kDown:
@@ -486,7 +534,7 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	case kPause:
 	    PlayerSendPause();
 	    PlayerPaused ^= 1;
-	    ShowReplayMode();
+	    Show();
 	    break;
 
 	case kFastRew | k_Release:
@@ -507,7 +555,7 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    } else {
 		PlayerSendSeek(-10);
 	    }
-	    ShowReplayMode();
+	    Show();
 	    break;
 	case kRight:
 	    if (PlayerDvdNav) {
@@ -518,7 +566,7 @@ eOSState cMyControl::ProcessKey(eKeys key)
 	    if (PlayerSpeed < 32) {
 		PlayerSendSetSpeed(PlayerSpeed *= 2);
 	    }
-	    ShowReplayMode();
+	    Show();
 	    break;
 
 	case kRed:
@@ -583,8 +631,11 @@ eOSState cMyControl::ProcessKey(eKeys key)
 		// FIXME: PlayerDvdNav = 0;
 		break;
 	    }
-	    // FIXME: full mode
-	    ShowReplayMode();
+	    if (infoVisible) {
+		Hide();
+		infoVisible = false;
+	    } else
+		Show();
 	    break;
 
 	case kBack:

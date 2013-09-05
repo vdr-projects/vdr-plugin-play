@@ -3,7 +3,7 @@
 ///
 ///	Copyright (c) 2012, 2013 by Johns.  All Rights Reserved.
 ///
-///	Contributor(s):
+///	Contributor(s): Dennis Bendlin
 ///
 ///	License: AGPLv3
 ///
@@ -136,6 +136,10 @@ static int PlayerVolume = -1;		///< volume 0 - 100
 char PlayerDvdNav;			///< dvdnav active
 char PlayerPaused;			///< player paused
 char PlayerSpeed;			///< player playback speed
+int PlayerCurrent;			///< current postion in seconds
+int PlayerTotal;			///< total length in seconds
+char PlayerTitle[256];			///< title from meta data
+char PlayerFilename[256];		///< filename
 
 //////////////////////////////////////////////////////////////////////////////
 //	Slave
@@ -150,6 +154,7 @@ char PlayerSpeed;			///< player playback speed
 static void PlayerParseLine(const char *data, int size)
 {
     Debug(4, "play/parse: |%.*s|\n", size, data);
+    (void)size;
 
     // data is \0 terminated
     if (!strncasecmp(data, "DVDNAV_TITLE_IS_MENU", 20)) {
@@ -171,6 +176,24 @@ static void PlayerParseLine(const char *data, int size)
 
 	if (sscanf(data, "ID_SID_%d_LANG=%s", &sid, lang) == 2) {
 	    Debug(3, "SID(%d) = %s\n", sid, lang);
+	}
+    } else if (!strncasecmp(data, "ANS_META_TITLE=", 14)) {
+	if (sscanf(data, "ANS_META_TITLE='%[^\t\n]", PlayerTitle) == 1) {
+	    PlayerTitle[strlen(PlayerTitle) - 1] = 0;
+	    Debug(3, "PlayerTitle= %s\n", PlayerTitle);
+	}
+    } else if (!strncasecmp(data, "ANS_FILENAME=", 12)) {
+	if (sscanf(data, "ANS_FILENAME='%[^\t\n]", PlayerFilename) == 1) {
+	    PlayerFilename[strlen(PlayerFilename) - 1] = 0;
+	    Debug(3, "PlayerFilename= %s\n", PlayerFilename);
+	}
+    } else if (!strncasecmp(data, "ANS_LENGTH=", 10)) {
+	if (sscanf(data, "ANS_LENGTH=%d", &PlayerTotal) == 1) {
+	    Debug(3, "PlayerTotal=%d\n", PlayerTotal);
+	}
+    } else if (!strncasecmp(data, "ANS_TIME_POSITION=", 17)) {
+	if (sscanf(data, "ANS_TIME_POSITION=%d", &PlayerCurrent) == 1) {
+	    Debug(3, "PlayerCurrent=%d\n", PlayerCurrent);
 	}
     }
 }
@@ -270,7 +293,7 @@ static void PlayerExec(const char *filename)
 #ifdef DEBUG
     args[3] = "all=6:global=4:cplayer=4:identify=4";
 #else
-    args[3] = "all=2:global=2:cplayer=2:identify=4";
+    args[3] = "all=2:global=4:cplayer=2:identify=4";
 #endif
     if (ConfigOsdOverlay) {
 	args[4] = "-noontop";
@@ -691,6 +714,46 @@ void PlayerSendDvdNavMenu(void)
 {
     if (ConfigUseSlave) {
 	SendCommand("pausing_keep dvdnav menu\n");
+    }
+}
+
+/**
+**	Get length in seconds.
+*/
+void PlayerGetLength(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("get_time_length\n");
+    }
+}
+
+/**
+**	Get current position in seconds.
+*/
+void PlayerGetCurrentPosition(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("get_time_pos\n");
+    }
+}
+
+/**
+**	Get title from meta data.
+*/
+void PlayerGetMetaTitle(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("get_meta_title\n");
+    }
+}
+
+/**
+**	Get filename.
+*/
+void PlayerGetFilename(void)
+{
+    if (ConfigUseSlave) {
+	SendCommand("get_file_name\n");
     }
 }
 
